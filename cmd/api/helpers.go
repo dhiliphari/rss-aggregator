@@ -2,7 +2,9 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
+	"strings"
 )
 
 func (app *application) writeJSON(w http.ResponseWriter, status int, payload any) {
@@ -28,4 +30,18 @@ func (app *application) clientError(w http.ResponseWriter, status int, msg strin
 func (app *application) serverError(w http.ResponseWriter, err error) {
 	app.logger.Error(err.Error())
 	http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+}
+
+func getApiKey(r *http.Request) (string, error) {
+	auth := r.Header.Get("Authorization")
+	if auth == "" {
+		return "", errors.New("no auth header")
+	}
+
+	split := strings.Split(auth, " ")
+	if len(split) != 2 || split[0] != "ApiKey" {
+		return "", errors.New("malformed auth header")
+	}
+
+	return split[1], nil
 }

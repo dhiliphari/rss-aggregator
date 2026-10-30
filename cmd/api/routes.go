@@ -7,5 +7,7 @@ func (app *application) routes() http.Handler {
 
 	mux.HandleFunc("GET /healthz", app.healthz)
 
+	mux.HandleFunc("POST /users", app.createUser)
+
 	return mux
 }

@@ -6,12 +6,15 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/dhiliphari/rss-aggregator/internal/models"
+
 	_ "github.com/lib/pq"
 )
 
 type application struct {
 	cfg    *config
 	logger *slog.Logger
+	users  *models.UserModel
 }
 
 func main() {
@@ -29,6 +32,9 @@ func main() {
 	app := &application{
 		cfg:    cfg,
 		logger: logger,
+		users: &models.UserModel{
+			DB: db,
+		},
 	}
 
 	srv := &http.Server{

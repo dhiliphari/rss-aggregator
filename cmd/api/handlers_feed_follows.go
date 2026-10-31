@@ -2,9 +2,11 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 	"uuid"
 
+	"github.com/dhiliphari/rss-aggregator/internal/models"
 	"github.com/dhiliphari/rss-aggregator/internal/validator"
 )
 
@@ -53,4 +55,26 @@ func (app *application) feedsFollowedByUser(w http.ResponseWriter, r *http.Reque
 	}
 
 	app.writeJSON(w, http.StatusOK, feedFollows)
+}
+
+func (app *application) unfollowFeed(w http.ResponseWriter, r *http.Request) {
+	user := getUser(r)
+
+	feedFollowId, err := uuid.Parse(r.PathValue("feedFollowID"))
+	if err != nil {
+		app.clientError(w, http.StatusBadRequest, "invalid feed follow id")
+		return
+	}
+
+	err = app.feedFollows.Delete(r.Context(), feedFollowId, user.Id)
+	if err != nil {
+		if errors.Is(err, models.ErrNotFound) {
+			app.clientError(w, http.StatusNotFound, "feed follow not found")
+		} else {
+			app.serverError(w, err)
+		}
+		return
+	}
+
+	app.writeJSON(w, http.StatusNoContent, struct{}{})
 }

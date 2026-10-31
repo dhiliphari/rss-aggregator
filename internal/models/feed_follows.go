@@ -3,6 +3,7 @@ package models
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"time"
 	"uuid"
 )
@@ -67,4 +68,18 @@ func (m *FeedFollowModel) ListByUser(ctx context.Context, userId uuid.UUID) ([]F
 	}
 
 	return fs, nil
+}
+
+func (m *FeedFollowModel) Delete(ctx context.Context, id, userId uuid.UUID) error {
+	stmt := `DELETE FROM feed_follows WHERE id = $1 AND user_id = $2`
+
+	_, err := m.DB.ExecContext(ctx, stmt, id, userId)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return ErrNotFound
+		}
+		return err
+	}
+
+	return nil
 }

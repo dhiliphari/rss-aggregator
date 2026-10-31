@@ -24,6 +24,8 @@ func (app *application) routes() http.Handler {
 	mux.Handle("GET /me/feeds/following", app.requireAuthentication(http.HandlerFunc(app.feedsFollowedByUser)))
 	// feed_follows: user follow feed
 	mux.Handle("POST /me/feeds/following", app.requireAuthentication(http.HandlerFunc(app.followFeed)))
+	// feed_follows: user follow feed
+	mux.Handle("DELETE /me/feeds/following/{feedFollowID}", app.requireAuthentication(http.HandlerFunc(app.unfollowFeed)))
 
 	return mux
 }

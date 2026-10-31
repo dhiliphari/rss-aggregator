@@ -18,6 +18,7 @@ type application struct {
 	users       *models.UserModel
 	feeds       *models.FeedModel
 	feedFollows *models.FeedFollowModel
+	posts       *models.PostModel
 }
 
 func main() {
@@ -42,6 +43,9 @@ func main() {
 			DB: db,
 		},
 		feedFollows: &models.FeedFollowModel{
+			DB: db,
+		},
+		posts: &models.PostModel{
 			DB: db,
 		},
 	}

@@ -27,5 +27,8 @@ func (app *application) routes() http.Handler {
 	// feed_follows: user follow feed
 	mux.Handle("DELETE /me/feeds/following/{feedFollowID}", app.requireAuthentication(http.HandlerFunc(app.unfollowFeed)))
 
+	// posts: feeds followed by user
+	mux.Handle("GET /me/posts", app.requireAuthentication(http.HandlerFunc(app.listUserPosts)))
+
 	return mux
 }

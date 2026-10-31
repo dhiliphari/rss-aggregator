@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"strings"
 	"sync"
 	"time"
 
@@ -42,5 +43,21 @@ func (app *application) scrapeFeed(feed models.Feed) {
 		return
 	}
 
-	_ = rss
+	for _, item := range rss.Channel.Item {
+		pubDate, err := time.Parse(time.RFC1123Z, item.PubDate)
+		if err != nil {
+			pubDate, err = time.Parse(time.RFC1123, item.PubDate)
+			if err != nil {
+				app.logger.Error("error parsing published date", "published_date", item.PubDate, "error", err.Error())
+				continue
+			}
+		}
+		_, err = app.posts.Create(context.Background(), item.Title, item.Description, item.Link, pubDate, feed.Id)
+		if err != nil {
+			if strings.Contains(err.Error(), "duplicate key") {
+				continue
+			}
+			app.logger.Error("failed to create post", "error", err.Error())
+		}
+	}
 }

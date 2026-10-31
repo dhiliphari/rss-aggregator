@@ -46,8 +46,16 @@ func (m *FeedModel) Create(ctx context.Context, name, url string, userId uuid.UU
 
 func (m *FeedModel) List(ctx context.Context) ([]Feed, error) {
 	query := `SELECT id, created_at, updated_at, name, url, user_id FROM feeds`
+	return m.queryFeeds(ctx, query)
+}
 
-	rows, err := m.DB.QueryContext(ctx, query)
+func (m *FeedModel) ListByUser(ctx context.Context, userId uuid.UUID) ([]Feed, error) {
+	query := `SELECT id, created_at, updated_at, name, url, user_id FROM feeds WHERE user_id = $1`
+	return m.queryFeeds(ctx, query, userId)
+}
+
+func (m *FeedModel) queryFeeds(ctx context.Context, query string, args ...any) ([]Feed, error) {
+	rows, err := m.DB.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, err
 	}

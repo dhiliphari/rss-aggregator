@@ -50,5 +50,21 @@ func (app *application) listFeeds(w http.ResponseWriter, r *http.Request) {
 		app.serverError(w, err)
 		return
 	}
+
+	app.writeJSON(w, http.StatusOK, feeds)
+}
+
+func (app *application) listUserFeeds(w http.ResponseWriter, r *http.Request) {
+	user, ok := r.Context().Value("user").(*models.User)
+	if !ok {
+		panic("handler missing auth middleware")
+	}
+
+	feeds, err := app.feeds.ListByUser(r.Context(), user.Id)
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+
 	app.writeJSON(w, http.StatusOK, feeds)
 }

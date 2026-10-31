@@ -18,9 +18,9 @@ func (app *application) writeJSON(w http.ResponseWriter, status int, payload any
 	w.Write(data)
 }
 
-func (app *application) clientError(w http.ResponseWriter, status int, msg string) {
+func (app *application) clientError(w http.ResponseWriter, status int, msg any) {
 	payload := struct {
-		Error string `json:"error"`
+		Error any `json:"error"`
 	}{
 		Error: msg,
 	}

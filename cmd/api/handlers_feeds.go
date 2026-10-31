@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/dhiliphari/rss-aggregator/internal/models"
+	"github.com/dhiliphari/rss-aggregator/internal/validator"
 )
 
 func (app *application) createFeed(w http.ResponseWriter, r *http.Request) {
@@ -16,11 +17,21 @@ func (app *application) createFeed(w http.ResponseWriter, r *http.Request) {
 	var params struct {
 		Name string `json:"name"`
 		URL  string `json:"url"`
+		validator.Validator
 	}
 
 	err := json.NewDecoder(r.Body).Decode(&params)
 	if err != nil {
 		app.clientError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+
+	params.CheckField(validator.NotBlank(params.Name), "name", "field is required")
+	params.CheckField(validator.NotBlank(params.URL), "url", "field is required")
+	params.CheckField(validator.IsValidURL(params.URL), "url", "must be a valid URL")
+
+	if !params.Valid() {
+		app.clientError(w, http.StatusBadRequest, params.FieldErrors)
 		return
 	}
 

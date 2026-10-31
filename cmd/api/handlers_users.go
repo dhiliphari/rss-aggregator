@@ -5,16 +5,25 @@ import (
 	"net/http"
 
 	"github.com/dhiliphari/rss-aggregator/internal/models"
+	"github.com/dhiliphari/rss-aggregator/internal/validator"
 )
 
 func (app *application) createUser(w http.ResponseWriter, r *http.Request) {
 	var params struct {
 		Name string `json:"name"`
+		validator.Validator
 	}
 
 	err := json.NewDecoder(r.Body).Decode(&params)
 	if err != nil {
 		app.clientError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+
+	params.CheckField(validator.NotBlank(params.Name), "name", "field is required")
+
+	if !params.Valid() {
+		app.clientError(w, http.StatusBadRequest, params.FieldErrors)
 		return
 	}
 

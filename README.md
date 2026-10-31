@@ -28,6 +28,16 @@ Other targets: `make build` (outputs `./bin/rss-aggregator`) and `make migrate-d
 
 The server accepts the flags `-addr` (default `:5000`) and `-dsn`.
 
+## Web UI
+
+The Go server also serves a web UI. Once it's running, open http://localhost:5000 to sign up or log in with an API key, add and follow feeds, and read posts.
+
+The UI was vibe coded with [Claude Code](https://claude.com/claude-code).
+
+The UI is in `ui/`: `ui/index.html` is served at `/`, and files in `ui/static/` are served under `/static/`. It uses [Alpine.js](https://alpinejs.dev), loaded from a CDN, and has no build step. The server reads these files from disk on every request, so run it from the repository root. Edits show up on reload without a rebuild.
+
+The UI calls the API on the same origin it is served from.
+
 ## Authentication
 
 `POST /users` returns an `api_key`. Send it on authenticated requests:
@@ -40,6 +50,7 @@ Authorization: ApiKey <api_key>
 
 | Method | Path | Auth | Description |
 |--------|------|------|-------------|
+| GET | `/` | | Web UI |
 | GET | `/healthz` | | Health check |
 | POST | `/users` | | Create a user: `{"name": "..."}` |
 | GET | `/me` | ✓ | Get the current user |
@@ -59,4 +70,5 @@ internal/models/  Database access (users, feeds, feed_follows, posts)
 internal/rss/     RSS fetching and parsing
 internal/validator/ Request validation helpers
 migrations/       SQL migrations (golang-migrate)
+ui/               Web UI (index.html + static/ assets, Alpine.js)
 ```

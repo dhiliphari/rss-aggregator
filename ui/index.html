@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RSS Aggregator</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <script defer src="/static/app.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.9/dist/cdn.min.js"></script>
+</head>
+<body x-data="app" x-cloak>
+  <header>
+    <h1>RSS Aggregator</h1>
+    <template x-if="user">
+      <div class="user-info">
+        <span class="avatar" x-text="user.name.charAt(0).toUpperCase()"></span>
+        <span x-text="user.name"></span>
+        <button class="secondary small" @click="copy(user.api_key, 'API key copied')">Copy API key</button>
+        <button class="secondary small" @click="logout()">Log out</button>
+      </div>
+    </template>
+  </header>
+
+  <main>
+    <!-- Booting: trying a saved API key -->
+    <div x-show="booting" class="center muted">Loading…</div>
+
+    <!-- Signed out -->
+    <section x-show="!booting && !user" class="auth">
+      <div class="card">
+        <div class="tabs">
+          <button :class="{ active: authTab === 'login' }" @click="authTab = 'login'">Log in</button>
+          <button :class="{ active: authTab === 'signup' }" @click="authTab = 'signup'">Create account</button>
+        </div>
+
+        <form x-show="authTab === 'login'" @submit.prevent="submitLogin()">
+          <label>API key
+            <input x-model.trim="forms.apiKey" placeholder="Paste your API key" required autocomplete="off">
+          </label>
+          <button type="submit" :disabled="busy.auth" x-text="busy.auth ? 'Logging in…' : 'Log in'"></button>
+        </form>
+
+        <form x-show="authTab === 'signup'" @submit.prevent="submitSignup()">
+          <label>Name
+            <input x-model.trim="forms.name" placeholder="Your name" required>
+          </label>
+          <button type="submit" :disabled="busy.auth" x-text="busy.auth ? 'Creating…' : 'Sign up'"></button>
+        </form>
+      </div>
+    </section>
+
+    <!-- Signed in -->
+    <section x-show="user" class="layout">
+      <aside class="column">
+        <div class="card">
+          <div class="card-header">
+            <h2>Feeds</h2>
+            <button class="small" @click="showAddFeed = !showAddFeed" x-text="showAddFeed ? 'Cancel' : '+ Add'"></button>
+          </div>
+
+          <form x-show="showAddFeed" x-transition @submit.prevent="submitFeed()" class="add-feed">
+            <input x-model.trim="forms.feedName" placeholder="Name" required>
+            <input x-model.trim="forms.feedUrl" type="url" placeholder="https://example.com/rss.xml" required>
+            <button type="submit" :disabled="busy.feed" x-text="busy.feed ? 'Adding…' : 'Add & follow'"></button>
+          </form>
+
+          <div class="tabs">
+            <button :class="{ active: feedTab === 'following' }" @click="feedTab = 'following'">
+              Following <span class="count" x-text="followedFeeds.length"></span>
+            </button>
+            <button :class="{ active: feedTab === 'all' }" @click="feedTab = 'all'">
+              All <span class="count" x-text="feeds.length"></span>
+            </button>
+          </div>
+
+          <input class="search" type="search" x-model="feedQuery" placeholder="Filter feeds…">
+
+          <ul class="list">
+            <template x-for="feed in visibleFeeds" :key="feed.id">
+              <li :class="{ selected: postFeed === feed.id }">
+                <div class="feed-info" @click="isFollowing(feed.id) && togglePostFeed(feed.id)"
+                     :class="{ clickable: isFollowing(feed.id) }"
+                     :title="isFollowing(feed.id) ? 'Show only posts from this feed' : ''">
+                  <div class="feed-name" x-text="feed.name"></div>
+                  <div class="feed-url" x-text="hostname(feed.url)" :title="feed.url"></div>
+                </div>
+                <button class="small"
+                        :class="{ secondary: isFollowing(feed.id) }"
+                        :disabled="busy.follow[feed.id]"
+                        @click="toggleFollow(feed)"
+                        x-text="isFollowing(feed.id) ? 'Unfollow' : 'Follow'"></button>
+              </li>
+            </template>
+            <li x-show="visibleFeeds.length === 0" class="empty"
+                x-text="feedQuery ? 'No matching feeds.' : (feedTab === 'following' ? 'You are not following any feeds yet.' : 'No feeds yet. Add one above.')"></li>
+          </ul>
+        </div>
+      </aside>
+
+      <div class="column">
+        <div class="card">
+          <div class="card-header">
+            <h2>
+              Latest posts
+              <template x-if="postFeed">
+                <span class="chip">
+                  <span x-text="feedName(postFeed)"></span>
+                  <button class="chip-close" @click="postFeed = null" aria-label="Clear feed filter">×</button>
+                </span>
+              </template>
+            </h2>
+            <button class="secondary small" @click="refresh()" :disabled="busy.posts">
+              <span :class="{ spin: busy.posts }">↻</span> Refresh
+            </button>
+          </div>
+
+          <input class="search" type="search" x-model="postQuery" placeholder="Search posts…">
+
+          <!-- Skeletons on first load -->
+          <ul class="posts" x-show="busy.posts && posts.length === 0">
+            <template x-for="i in 4" :key="i">
+              <li class="skeleton"><div></div><div></div><div></div></li>
+            </template>
+          </ul>
+
+          <ul class="posts">
+            <template x-for="post in visiblePosts" :key="post.id">
+              <li>
+                <a :href="post.url" target="_blank" rel="noopener" x-text="post.title"></a>
+                <div class="meta">
+                  <span class="badge" x-text="feedName(post.feed_id)" @click="togglePostFeed(post.feed_id)"></span>
+                  <time :datetime="post.published_at" :title="new Date(post.published_at).toLocaleString()"
+                        x-text="timeAgo(post.published_at)"></time>
+                </div>
+                <p class="desc" x-show="post.summary" x-text="post.summary"></p>
+              </li>
+            </template>
+            <li x-show="!busy.posts && visiblePosts.length === 0" class="empty"
+                x-text="posts.length ? 'No posts match your filters.' : 'No posts yet. Follow a feed — new posts are fetched about once a minute.'"></li>
+          </ul>
+
+          <button class="secondary load-more" x-show="posts.length >= postCount" @click="loadMore()" :disabled="busy.posts">
+            Load more
+          </button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- New account: show API key once -->
+  <div class="modal-backdrop" x-show="newApiKey" x-transition.opacity @keydown.escape.window="newApiKey = null">
+    <div class="modal" @click.outside="newApiKey = null">
+      <h2>Account created 🎉</h2>
+      <p>This is your API key. Save it somewhere safe — you'll need it to log in again.</p>
+      <div class="key-box">
+        <code x-text="newApiKey"></code>
+        <button class="small" @click="copy(newApiKey, 'API key copied')">Copy</button>
+      </div>
+      <button @click="newApiKey = null">Got it</button>
+    </div>
+  </div>
+
+  <!-- Toasts -->
+  <div class="toasts">
+    <template x-for="t in toasts" :key="t.id">
+      <div class="toast" :class="t.type" x-transition>
+        <span x-text="t.message"></span>
+        <button @click="dismiss(t.id)" aria-label="Dismiss">×</button>
+      </div>
+    </template>
+  </div>
+</body>
+</html>

@@ -5,6 +5,11 @@ import "net/http"
 func (app *application) routes() http.Handler {
 	mux := http.NewServeMux()
 
+	fs := http.FileServer(http.Dir("./ui/static"))
+	mux.Handle("/static/", http.StripPrefix("/static", fs))
+
+	mux.Handle("/{$}", http.HandlerFunc(app.home))
+
 	// get server health status
 	mux.HandleFunc("GET /healthz", app.healthz)
 
@@ -30,5 +35,5 @@ func (app *application) routes() http.Handler {
 	// posts: feeds followed by user
 	mux.Handle("GET /me/posts", app.requireAuthentication(http.HandlerFunc(app.listUserPosts)))
 
-	return mux
+	return app.enableCORS(mux)
 }

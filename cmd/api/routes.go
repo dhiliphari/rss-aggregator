@@ -10,5 +10,7 @@ func (app *application) routes() http.Handler {
 	mux.HandleFunc("POST /users", app.createUser)
 	mux.Handle("GET /users", app.requireAuthentication(http.HandlerFunc(app.getUser)))
 
+	mux.Handle("POST /feeds", app.requireAuthentication(http.HandlerFunc(app.createFeed)))
+
 	return mux
 }

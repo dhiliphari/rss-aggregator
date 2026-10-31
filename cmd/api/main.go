@@ -15,6 +15,7 @@ type application struct {
 	cfg    *config
 	logger *slog.Logger
 	users  *models.UserModel
+	feeds  *models.FeedModel
 }
 
 func main() {
@@ -33,6 +34,9 @@ func main() {
 		cfg:    cfg,
 		logger: logger,
 		users: &models.UserModel{
+			DB: db,
+		},
+		feeds: &models.FeedModel{
 			DB: db,
 		},
 	}

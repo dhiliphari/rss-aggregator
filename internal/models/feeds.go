@@ -43,3 +43,32 @@ func (m *FeedModel) Create(ctx context.Context, name, url string, userId uuid.UU
 
 	return feed, nil
 }
+
+func (m *FeedModel) List(ctx context.Context) ([]Feed, error) {
+	query := `SELECT id, created_at, updated_at, name, url, user_id FROM feeds`
+
+	rows, err := m.DB.QueryContext(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var feeds []Feed
+
+	for rows.Next() {
+		var feed Feed
+
+		err = rows.Scan(&feed.Id, &feed.CreatedAt, &feed.UpdatedAt, &feed.Name, &feed.URL, &feed.UserId)
+		if err != nil {
+			return nil, err
+		}
+
+		feeds = append(feeds, feed)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return feeds, nil
+}

@@ -43,3 +43,12 @@ func (app *application) createFeed(w http.ResponseWriter, r *http.Request) {
 
 	app.writeJSON(w, http.StatusCreated, feed)
 }
+
+func (app *application) listFeeds(w http.ResponseWriter, r *http.Request) {
+	feeds, err := app.feeds.List(r.Context())
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+	app.writeJSON(w, http.StatusOK, feeds)
+}

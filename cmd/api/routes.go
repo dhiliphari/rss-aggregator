@@ -7,9 +7,10 @@ func (app *application) routes() http.Handler {
 
 	mux.HandleFunc("GET /healthz", app.healthz)
 
-	mux.HandleFunc("POST /users", app.createUser)
+	mux.Handle("POST /users", http.HandlerFunc(app.createUser))
 	mux.Handle("GET /users", app.requireAuthentication(http.HandlerFunc(app.getUser)))
 
+	mux.Handle("GET /feeds", http.HandlerFunc(app.listFeeds))
 	mux.Handle("POST /feeds", app.requireAuthentication(http.HandlerFunc(app.createFeed)))
 
 	return mux

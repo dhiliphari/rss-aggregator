@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/dhiliphari/rss-aggregator/internal/models"
 
@@ -44,6 +45,8 @@ func main() {
 			DB: db,
 		},
 	}
+
+	go app.startScraping(10, time.Minute)
 
 	srv := &http.Server{
 		Addr:    cfg.addr,

@@ -58,10 +58,10 @@ func (m *FeedModel) MarkFeedFetched(ctx context.Context, id uuid.UUID) error {
 	return err
 }
 
-func (m *FeedModel) GetNextFeedToFetch(ctx context.Context) ([]Feed, error) {
+func (m *FeedModel) GetNextFeedToFetch(ctx context.Context, count int) ([]Feed, error) {
 	query := `SELECT id, created_at, updated_at, name, url, user_id FROM feeds
-	ORDER BY last_fetched_at ASC NULLS FIRST LIMIT 1`
-	return m.queryFeeds(ctx, query)
+	ORDER BY last_fetched_at ASC NULLS FIRST LIMIT $1`
+	return m.queryFeeds(ctx, query, count)
 }
 
 func (m *FeedModel) List(ctx context.Context) ([]Feed, error) {

@@ -5,6 +5,8 @@ import (
 	"errors"
 	"net/http"
 	"strings"
+
+	"github.com/dhiliphari/rss-aggregator/internal/models"
 )
 
 func (app *application) writeJSON(w http.ResponseWriter, status int, payload any) {
@@ -44,4 +46,12 @@ func getApiKey(r *http.Request) (string, error) {
 	}
 
 	return split[1], nil
+}
+
+func getUser(r *http.Request) *models.User {
+	user, ok := r.Context().Value("user").(*models.User)
+	if !ok {
+		panic("handler missing auth middleware")
+	}
+	return user
 }

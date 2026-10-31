@@ -4,15 +4,11 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/dhiliphari/rss-aggregator/internal/models"
 	"github.com/dhiliphari/rss-aggregator/internal/validator"
 )
 
 func (app *application) createFeed(w http.ResponseWriter, r *http.Request) {
-	user, ok := r.Context().Value("user").(*models.User)
-	if !ok {
-		panic("handler missing auth middleware")
-	}
+	user := getUser(r)
 
 	var params struct {
 		Name string `json:"name"`
@@ -55,10 +51,7 @@ func (app *application) listFeeds(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *application) listUserFeeds(w http.ResponseWriter, r *http.Request) {
-	user, ok := r.Context().Value("user").(*models.User)
-	if !ok {
-		panic("handler missing auth middleware")
-	}
+	user := getUser(r)
 
 	feeds, err := app.feeds.ListByUser(r.Context(), user.Id)
 	if err != nil {

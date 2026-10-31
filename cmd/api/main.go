@@ -12,10 +12,11 @@ import (
 )
 
 type application struct {
-	cfg    *config
-	logger *slog.Logger
-	users  *models.UserModel
-	feeds  *models.FeedModel
+	cfg         *config
+	logger      *slog.Logger
+	users       *models.UserModel
+	feeds       *models.FeedModel
+	feedFollows *models.FeedFollowModel
 }
 
 func main() {
@@ -37,6 +38,9 @@ func main() {
 			DB: db,
 		},
 		feeds: &models.FeedModel{
+			DB: db,
+		},
+		feedFollows: &models.FeedFollowModel{
 			DB: db,
 		},
 	}

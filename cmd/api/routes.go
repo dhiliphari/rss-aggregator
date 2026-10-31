@@ -8,17 +8,22 @@ func (app *application) routes() http.Handler {
 	// get server health status
 	mux.HandleFunc("GET /healthz", app.healthz)
 
-	// user: create
+	// users: create
 	mux.Handle("POST /users", http.HandlerFunc(app.createUser))
-	// user: get by api_key
+	// users: get by api_key
 	mux.Handle("GET /me", app.requireAuthentication(http.HandlerFunc(app.getUser)))
 
-	// feed: list all
+	// feeds: list all
 	mux.Handle("GET /feeds", http.HandlerFunc(app.listFeeds))
-	// feed: create by user
+	// feeds: create by user
 	mux.Handle("POST /me/feeds", app.requireAuthentication(http.HandlerFunc(app.createFeed)))
-	// feed: get by user
+	// feeds: get by user
 	mux.Handle("GET /me/feeds", app.requireAuthentication(http.HandlerFunc(app.listUserFeeds)))
+
+	// feed_follows: feeds followed by user
+	mux.Handle("GET /me/feeds/following", app.requireAuthentication(http.HandlerFunc(app.feedsFollowedByUser)))
+	// feed_follows: user follow feed
+	mux.Handle("POST /me/feeds/following", app.requireAuthentication(http.HandlerFunc(app.followFeed)))
 
 	return mux
 }

@@ -12,3 +12,11 @@ run:
 build:
 	@echo "Building $(APP_NAME)..."
 	go build -o ./bin/$(APP_NAME) $(APP_PATH)
+
+migrate-up:
+	@echo "Up migrations..."
+	migrate -path migrations -database $(DSN) up
+
+migrate-down:
+	@echo "Down migrations..."
+	migrate -path migrations -database $(DSN) down

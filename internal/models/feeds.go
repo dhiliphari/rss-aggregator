@@ -3,6 +3,7 @@ package models
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"time"
 	"uuid"
 )
@@ -42,6 +43,25 @@ func (m *FeedModel) Create(ctx context.Context, name, url string, userId uuid.UU
 	}
 
 	return feed, nil
+}
+
+func (m *FeedModel) MarkFeedFetched(ctx context.Context, id uuid.UUID) error {
+	stmt := `UPDATE feeds SET last_fetched_at = NOW(), updated_at = NOW() WHERE id = $1`
+
+	_, err := m.DB.ExecContext(ctx, stmt, id)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return ErrNotFound
+		}
+	}
+
+	return err
+}
+
+func (m *FeedModel) GetNextFeedToFetch(ctx context.Context) ([]Feed, error) {
+	query := `SELECT id, created_at, updated_at, name, url, user_id FROM feeds
+	ORDER BY last_fetched_at ASC NULLS FIRST LIMIT 1`
+	return m.queryFeeds(ctx, query)
 }
 
 func (m *FeedModel) List(ctx context.Context) ([]Feed, error) {
